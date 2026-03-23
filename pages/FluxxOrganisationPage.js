@@ -266,4 +266,41 @@ export class FluxxOrganisationPage extends BasePage {
     this.log.info(`\n  Overall: ${allPassed ? 'ALL PASSED' : 'SOME FAILED'}`);
     return { passed: allPassed, details: results };
   }
+
+  async verifyWorkflowStatus(expectedStatus) {
+    this.log.info(`Verifying workflow status: ${expectedStatus}`);
+    return await this.page.locator(`text=Status: ${expectedStatus}`).isVisible({ timeout: TIMEOUTS.ELEMENT_VISIBLE }).catch(() => false);
+  }
+
+  async verifyDetailSections(sections) {
+    this.log.info('Verifying detail sections');
+    const results = {};
+    for (const s of sections) {
+      results[s] = await this.page.locator(`text=${s}`).first().isVisible().catch(() => false);
+    }
+    return results;
+  }
+
+  async verifyRecipientTypeDisplay(expectedType) {
+    this.log.info(`Verifying recipient type: ${expectedType}`);
+    return await this.page.locator(`text=${expectedType}`).first().isVisible({ timeout: TIMEOUTS.ELEMENT_VISIBLE }).catch(() => false);
+  }
+
+  async editOrganisation() {
+    this.log.info('Clicking Edit');
+    const editLink = this.page.getByRole('link', { name: 'Edit' });
+    await editLink.click();
+    await this.page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
+  }
+
+  async deleteOrganisation() {
+    this.log.info('Deleting organisation in Fluxx');
+    const deleteLink = this.page.locator('a').filter({ hasText: 'Delete' }).first();
+    if (await deleteLink.isVisible({ timeout: TIMEOUTS.ELEMENT_VISIBLE }).catch(() => false)) {
+      await deleteLink.click();
+      const confirm = this.page.getByRole('button', { name: /confirm|yes|ok|delete/i }).first();
+      if (await confirm.isVisible({ timeout: 3000 }).catch(() => false)) await confirm.click();
+      await this.page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
+    }
+  }
 }

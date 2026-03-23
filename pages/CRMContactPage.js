@@ -267,4 +267,36 @@ export class CRMContactPage extends BasePage {
     this.log.success(`Contact created from org: ${fullName}`);
     return fullName;
   }
+
+  async updateContactFields(data) {
+    this.log.info('Updating contact fields');
+    if (data.firstName) await this.setFirstName(data.firstName);
+    if (data.lastName) await this.setLastName(data.lastName);
+    if (data.email) await this.setEmail(data.email);
+    await this.safeClick(this.saveButton);
+    await this.page.waitForTimeout(TIMEOUTS.SAVE);
+  }
+
+  async changePrimaryOrganisation(newOrgName) {
+    this.log.info(`Changing primary org to: ${newOrgName}`);
+    await this.linkToPrimaryOrganisation(newOrgName);
+    await this.safeClick(this.saveButton);
+  }
+
+  async deleteContact() {
+    this.log.info('Attempting to delete contact');
+    const deleteBtn = this.page.getByRole('button', { name: /Delete/i });
+    const deactivateBtn = this.page.getByRole('button', { name: /Deactivate/i });
+    if (await deleteBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await deleteBtn.click();
+      const confirm = this.page.getByRole('button', { name: /Confirm|Delete|OK/i }).first();
+      if (await confirm.isVisible({ timeout: 3000 }).catch(() => false)) await confirm.click();
+    } else if (await deactivateBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      this.log.warn('Delete not available — using Deactivate');
+      await deactivateBtn.click();
+      const confirm = this.page.getByRole('button', { name: /Confirm|Deactivate|OK/i }).first();
+      if (await confirm.isVisible({ timeout: 3000 }).catch(() => false)) await confirm.click();
+    }
+    await this.page.waitForTimeout(TIMEOUTS.SAVE);
+  }
 }

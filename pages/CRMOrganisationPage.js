@@ -361,4 +361,43 @@ export class CRMOrganisationPage extends BasePage {
     await this.page.getByLabel(orgName).click();
     await this.page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
   }
+
+  async editOrganisation() {
+    this.log.info('Entering edit mode');
+    await this.page.keyboard.press('F2');
+    await this.page.waitForTimeout(TIMEOUTS.SHORT_WAIT);
+  }
+
+  async updateOrganisationName(newName) {
+    this.log.info(`Updating org name to: ${newName}`);
+    await this.fillOrganisationName(newName);
+    await this.safeClick(this.saveButton);
+    await this.page.waitForTimeout(TIMEOUTS.SAVE);
+  }
+
+  async updateFCRAFields(regNumber, expiryDate) {
+    this.log.info('Updating FCRA fields');
+    if (regNumber) await this.setFCRARegistrationNumber(regNumber);
+    if (expiryDate) await this.setFCRAExpiryDate(expiryDate);
+    await this.safeClick(this.saveButton);
+  }
+
+  async deleteOrganisation() {
+    this.log.info('Attempting to delete organisation');
+    const deleteBtn = this.page.getByRole('button', { name: /Delete/i });
+    const deactivateBtn = this.page.getByRole('button', { name: /Deactivate/i });
+    if (await deleteBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await deleteBtn.click();
+      const confirm = this.page.getByRole('button', { name: /Confirm|Delete|OK/i }).first();
+      if (await confirm.isVisible({ timeout: 3000 }).catch(() => false)) await confirm.click();
+    } else if (await deactivateBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      this.log.warn('Delete not available — using Deactivate');
+      await deactivateBtn.click();
+      const confirm = this.page.getByRole('button', { name: /Confirm|Deactivate|OK/i }).first();
+      if (await confirm.isVisible({ timeout: 3000 }).catch(() => false)) await confirm.click();
+    } else {
+      this.log.warn('Neither Delete nor Deactivate button found');
+    }
+    await this.page.waitForTimeout(TIMEOUTS.SAVE);
+  }
 }

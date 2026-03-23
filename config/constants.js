@@ -43,6 +43,7 @@ export const SYNC_RETRY = {
 export const AUTH_STATE = {
   CRM: 'playwright/.auth/crm-state.json',
   FLUXX: 'playwright/.auth/fluxx-state.json',
+  FABRIC: 'playwright/.auth/fabric-state.json',
 };
 
 /** CRM Field Options */
@@ -111,4 +112,32 @@ export const FLUXX_CONTACT_FIELDS = {
   CONTACT_CARD: '#fluxx-card-7',
   /** Primary organisation field on contact detail */
   PRIMARY_ORGANISATION: '#user_primary_organization_id',
+};
+
+export const FABRIC_SELECTORS = {
+  REPORT_TITLE: 'Programme Rating Dashboard',
+  KPI_TOTAL_INVESTMENTS: 'Total Investments / DA',
+  KPI_TOTAL_RATED: 'Total Rated Investments / DA',
+  FILTER_INVESTMENT_TYPE: 'investmenttype',
+  FILTER_YEAR: 'Year',
+  FILTER_PROGRAMME_TEAM: 'powerbiprogrammeteam',
+  FILTER_CORE_STRATEGY: 'core_strategy',
+  FILTER_MONTH: 'month',
+  TAB_OVERVIEW: 'Overview',
+  TAB_DETAILED_VIEW: 'Detailed View',
+  RATING_COLORS: ['White - Too soon', 'Red - major issues', 'Amber - minor issues', 'Green - on track', 'Blue - Exceeding'],
+  PROGRAMME_TEAMS: ['Africa', 'Climate', 'EME', 'India', 'Nutrition', 'SRHR'],
+};
+
+export const FLUXX_INVESTMENT_FIELDS = {
+  NAME: '',
+  PROGRAMME_TEAM: '',
+  INVESTMENT_TYPE: '',
+  RATING: '',
+};
+
+export const FLUXX_COFUNDING_FIELDS = {
+  NAME: '',
+  FUNDER: '',
+  AMOUNT: '',
 };

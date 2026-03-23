@@ -18,6 +18,12 @@ const environments = {
       dashboardURL: 'https://ciff.eu-preprod.fluxxlabs.com/central/quick-actions',
       ssoLauncherURL: 'https://launcher.myapps.microsoft.com/api/signin/8ec23bcd-3576-4724-8468-b90064ce6a16?tenantId=74f3d84e-f433-4937-aca1-88c022bfc4f7',
     },
+    fabric: {
+      workspaceUrl: process.env.FABRIC_WORKSPACE_URL || 'https://app.fabric.microsoft.com/groups/df124183-1f44-43bd-bbaa-fbe2f4cb662f/list?experience=fabric-developer',
+      reportUrl: process.env.FABRIC_REPORT_URL || 'https://app.fabric.microsoft.com/groups/df124183-1f44-43bd-bbaa-fbe2f4cb662f/reports/65b6578f-7cf4-44ef-9cec-bd438139d9ff',
+      workspaceName: 'DEV-Portfolio Ratings',
+      reportName: 'Portfolio Rating Dashboard - DEV',
+    },
     sso: {
       tenantId: '74f3d84e-f433-4937-aca1-88c022bfc4f7',
       loginDomain: 'login.microsoftonline.com',
@@ -69,6 +75,14 @@ export function getCRMConfig() {
  */
 export function getFluxxConfig() {
   return getEnvironment().fluxx;
+}
+
+/**
+ * Get Fabric-specific config
+ * @returns {Object} Fabric config with URLs
+ */
+export function getFabricConfig() {
+  return getEnvironment().fabric;
 }
 
 /**

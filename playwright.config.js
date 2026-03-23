@@ -78,6 +78,13 @@ export default defineConfig({
         ...devices['Desktop Firefox'],
       },
     },
+    {
+      name: 'fabric-setup',
+      testMatch: '**/globals/fabric-auth.setup.js',
+      use: {
+        ...devices['Desktop Firefox'],
+      },
+    },
 
     // ===================== CRM TESTS =====================
     {
@@ -103,6 +110,17 @@ export default defineConfig({
       dependencies: ['fluxx-setup'],
     },
 
+    // ===================== FABRIC TESTS =====================
+    {
+      name: 'fabric-tests',
+      testDir: './tests/fabric',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/fabric-state.json',
+      },
+      dependencies: ['fabric-setup'],
+    },
+
     // ===================== INTEGRATION TESTS =====================
     {
       name: 'integration',
@@ -111,7 +129,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/crm-state.json',
       },
-      dependencies: ['crm-setup', 'fluxx-setup'],
+      dependencies: ['crm-tests', 'fluxx-tests', 'fabric-tests'],
     },
   ],
 });

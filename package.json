@@ -12,6 +12,9 @@
     "test:headed": "npx playwright test --headed",
     "test:debug": "npx playwright test --debug",
     "report": "npx playwright show-report",
+    "test:fabric": "npx playwright test --project=fabric-setup --project=fabric-tests",
+    "test:all": "npx playwright test",
+    "test:cleanup": "npx playwright test --grep @cleanup",
     "clean": "rm -rf playwright-report test-results playwright/.auth/*.json"
   },
   "keywords": ["playwright", "automation", "testing", "crm", "fluxx"],

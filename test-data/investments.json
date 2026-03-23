@@ -1,0 +1,20 @@
+{
+  "basic_investment": {
+    "name_suffix": "Basic_Inv",
+    "programme_team": "Climate",
+    "investment_type": "Grant",
+    "rating": "Green - on track"
+  },
+  "africa_investment": {
+    "name_suffix": "Africa_Inv",
+    "programme_team": "Africa",
+    "investment_type": "Direct Agreement",
+    "rating": "Amber - minor issues"
+  },
+  "rated_investment": {
+    "name_suffix": "Rated_Inv",
+    "programme_team": "India",
+    "investment_type": "Grant",
+    "rating": "Red - major issues"
+  }
+}

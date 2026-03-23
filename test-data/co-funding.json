@@ -1,0 +1,17 @@
+{
+  "basic_cofunding": {
+    "name_suffix": "Basic_CF",
+    "funder": "Test Funder",
+    "amount": "100000"
+  },
+  "large_cofunding": {
+    "name_suffix": "Large_CF",
+    "funder": "Major Foundation",
+    "amount": "5000000"
+  },
+  "minimal_cofunding": {
+    "name_suffix": "Min_CF",
+    "funder": "Small Donor",
+    "amount": "1000"
+  }
+}

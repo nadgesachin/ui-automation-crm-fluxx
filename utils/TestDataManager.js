@@ -11,6 +11,8 @@ export class TestDataManager {
     /** @type {string[]} Track all created entity names for cleanup */
     this.createdOrganisations = [];
     this.createdContacts = [];
+    this.createdInvestments = [];
+    this.createdCoFunding = [];
   }
 
   /**
@@ -74,6 +76,30 @@ export class TestDataManager {
   }
 
   /**
+   * Generate a unique investment name with AUTO_UI_ prefix
+   * @param {string} suffix - Descriptive suffix (e.g., 'Inv')
+   * @returns {string} Unique investment name
+   */
+  generateInvestmentName(suffix = 'Inv') {
+    const timestamp = Date.now().toString().slice(-8);
+    const name = `${AUTO_PREFIX}INV_${suffix}_${timestamp}`;
+    this.createdInvestments.push(name);
+    return name;
+  }
+
+  /**
+   * Generate a unique co-funding name with AUTO_UI_ prefix
+   * @param {string} suffix - Descriptive suffix (e.g., 'CF')
+   * @returns {string} Unique co-funding name
+   */
+  generateCoFundingName(suffix = 'CF') {
+    const timestamp = Date.now().toString().slice(-8);
+    const name = `${AUTO_PREFIX}CF_${suffix}_${timestamp}`;
+    this.createdCoFunding.push(name);
+    return name;
+  }
+
+  /**
    * Get all created organisation names (for cleanup)
    * @returns {string[]}
    */
@@ -90,6 +116,18 @@ export class TestDataManager {
   }
 
   /**
+   * Get all created investment names (for cleanup)
+   * @returns {string[]}
+   */
+  getCreatedInvestments() { return this.createdInvestments; }
+
+  /**
+   * Get all created co-funding names (for cleanup)
+   * @returns {string[]}
+   */
+  getCreatedCoFunding() { return this.createdCoFunding; }
+
+  /**
    * Log all created test data (useful at end of test run)
    */
   logCreatedData() {
@@ -101,6 +139,14 @@ export class TestDataManager {
     if (this.createdContacts.length > 0) {
       console.log('Contacts:');
       this.createdContacts.forEach((name) => console.log(`  - ${name}`));
+    }
+    if (this.createdInvestments.length > 0) {
+      console.log('Investments:');
+      this.createdInvestments.forEach((name) => console.log(`  - ${name}`));
+    }
+    if (this.createdCoFunding.length > 0) {
+      console.log('Co-Funding:');
+      this.createdCoFunding.forEach((name) => console.log(`  - ${name}`));
     }
     console.log('--- End Test Data ---\n');
   }

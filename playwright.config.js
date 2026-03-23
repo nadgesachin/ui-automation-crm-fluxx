@@ -1,100 +1,117 @@
-// @ts-check
-const { defineConfig, devices } = require('@playwright/test');
-
-// Read environment variables from file.
-require('dotenv').config();
-
 /**
- * @see more at https://bit.ly/playwright-tutorial-automation-testing
+ * Playwright Configuration
+ *
+ * Project Structure:
+ *   1. crm-setup    → Authenticates to CRM and saves session state
+ *   2. fluxx-setup  → Authenticates to Fluxx and saves session state
+ *   3. crm-tests    → CRM-only tests (uses CRM session)
+ *   4. fluxx-tests  → Fluxx-only tests (uses Fluxx session)
+ *   5. integration  → CRM-Fluxx sync tests (uses CRM session, logs in to Fluxx inline)
+ *
+ * Session Management:
+ *   - Auth setup runs once per suite, saves cookies/storage to JSON files
+ *   - Subsequent tests reuse saved state, avoiding repeated SSO login
+ *   - Firefox is used for setup to handle Microsoft cookie issues reliably
  */
-module.exports = defineConfig({
-  // test timeout
-  timeout: 7 * 60 * 1000,
+
+import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const isHeadless = process.env.HEADLESS !== 'false';
+const slowMo = parseInt(process.env.SLOW_MO) || 0;
+
+export default defineConfig({
+  /* Test timeout: 2 minutes per test (sync polling can take time) */
+  timeout: 180000,
+
+  /* Expect timeout */
   expect: {
-    timeout: 3 * 60 * 1000
+    timeout: 15000,
   },
-  
-  testDir: './tests',
-  /* Run tests in files in parallel */
+
+  /* Run tests sequentially (CRM/Fluxx don't support parallel sessions well) */
   fullyParallel: false,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : 1,
-  // Reporter
-  reporter:[
-    ['html', { open: 'never' }],
-    // ['html'],
-    // ['allure-playwright'],
-    // ['junit', { outputFile: 'test-results/e2e-junit-results.xml' }],
-    ],
+  workers: 1,
 
-  use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://127.0.0.1:3000',
+  /* Retry failed tests once */
+  retries: 1,
 
-    // launchOptions: {
-    //   args: ["--start-fullscreen"]
-    // },
-
-    // video, screenshot, headless mode
-    video:'on',
-    screenshot: 'on',
-    headless : false,
-
-    // custom attribute
-    testIdAttribute: 'autocomplete',
-
-    // Collect trace when retrying the failed test
-    trace: 'on',
-  },
-
-  /* Configure projects for major browsers */
-  projects: [
-    // {
-    //   name: 'chromium',
-    //   use: { ...devices['Desktop Chrome'] },
-    // },
-
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    {
-      name: 'Google Chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome',
-     },
-    },
+  /* Reporter: HTML + console */
+  reporter: [
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['list'],
   ],
 
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://127.0.0.1:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
-});
+  /* Shared settings for all projects */
+  use: {
+    headless: isHeadless,
+    launchOptions: {
+      slowMo,
+      args: [
+        '--disable-features=BlockThirdPartyCookies',
+        '--disable-features=SameSiteByDefaultCookies,CookiesWithoutSameSiteMustBeSecure',
+      ],
+    },
+    screenshot: 'on',
+    video: 'retain-on-failure',
+    trace: 'retain-on-failure',
+    actionTimeout: 15000,
+    navigationTimeout: 60000,
+  },
 
+  /* Project definitions */
+  projects: [
+    // ===================== SETUP PROJECTS =====================
+    {
+      name: 'crm-setup',
+      testMatch: '**/globals/auth.setup.js',
+      use: {
+        ...devices['Desktop Firefox'],
+      },
+    },
+    {
+      name: 'fluxx-setup',
+      testMatch: '**/globals/fluxx-auth.setup.js',
+      use: {
+        ...devices['Desktop Firefox'],
+      },
+    },
+
+    // ===================== CRM TESTS =====================
+    {
+      name: 'crm-tests',
+      testDir: './tests/crm',
+      testIgnore: ['**/integration/**', '**/contacts/tests/**', '**/organisation/test/**'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/crm-state.json',
+      },
+      dependencies: ['crm-setup'],
+    },
+
+    // ===================== FLUXX TESTS =====================
+    {
+      name: 'fluxx-tests',
+      testDir: './tests/fluxx',
+      testIgnore: ['**/organisation/test/**'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/fluxx-state.json',
+      },
+      dependencies: ['fluxx-setup'],
+    },
+
+    // ===================== INTEGRATION TESTS =====================
+    {
+      name: 'integration',
+      testDir: './tests/integration',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/crm-state.json',
+      },
+      dependencies: ['crm-setup', 'fluxx-setup'],
+    },
+  ],
+});

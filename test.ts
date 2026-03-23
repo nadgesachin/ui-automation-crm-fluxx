@@ -1,0 +1,30 @@
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.goto('https://login.microsoftonline.com/74f3d84e-f433-4937-aca1-88c022bfc4f7/oauth2/authorize?client_id=2793995e-0a7d-40d7-bd35-6968ba142197&redirect_uri=https%3A%2F%2Flauncher.myapps.microsoft.com%2Fapi%2Fsignin-oidc&response_type=code&scope=openid%20profile%20offline_access&code_challenge=uBUCStaHHK0rKFMfgMbpglSErrDfSo7xxWMuWzXFsXE&code_challenge_method=S256&response_mode=form_post&nonce=639095086265996474.ZjkwZjM4YjgtNDYxOS00YTAwLTlhNGEtMWU2MjBhN2ZiNTM4YTI4MmVhMzQtM2NlMS00ZGRkLWFiYWYtM2MwYTczNjEzZmQw&client_info=1&x-client-brkrver=IDWeb.3.5.0.0&client-request-id=97fd2a68-ab60-44c0-ab69-26578d03f04a&state=CfDJ8BogGiCXYXpMtflot2FDbZ2CgHkni0IE6AiDyiXYokZCI3i9bDGzbuu8TBPLuFvcfRRoWi1qI9zptxfnQCFZZsYas1fRHwEYFUPptJsUr6qZtl-U3HCKkilQBumgEQ2x9fDWYckvZnUkgySDiNx9omg6PzdIETVcrkWT9KXJj9k3Jc6TMAGdytHJjnDfU6AkxukYkBAOOS4I2mveXtbYh6T0XDqIu-Aji4wexmxRwjptP6r7gf8Jx360dBK6pGZOvIZ4AKZ5hc_0xC-vacUWKIk9NdH3vNPo_4Hzlwu5Gh-zlryrsCk-gLPCyA6s7YkA0hDNyYw7O7ao_AfhUm6ewD9fBbBf7d7VbQJwD8BN15fxa1-1R6RrDxMJwJUAIL2ScK1YQZ2cQR_FAfGz6NkztAZO5re6AAJ3jltgMYg9tgrG8VT1KMkxOeOB1Y2i01n6Qtp8vptWGkf9QJumRTH8jQWvclKFjsL7qAB2pBEa5EMWzFv8NXnEuAvR3PNN73TVKRRSqomec6EdmVVODCnRcYk&x-client-SKU=ID_NET8_0&x-client-ver=8.3.0.0');
+  await page.getByPlaceholder('userid@ciff.org').click();
+  await page.getByPlaceholder('userid@ciff.org').fill('nsachin@ciffconsultants.org');
+  await page.getByPlaceholder('userid@ciff.org').press('Enter');
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByLabel('userid@ciff.org').fill('nsachin@ciffconsultants.org');
+  await page.getByLabel('userid@ciff.org').press('Enter');
+  await page.locator('#i0118').fill('AdmiN@172r/#!');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Yes' }).click();
+  await page.goto('https://ciff.eu-preprod.fluxxlabs.com/dashboard/index');
+  const page1Promise = page.waitForEvent('popup');
+  await page.getByLabel('Open Quick Actions Hub').click();
+  const page1 = await page1Promise;
+  const page2Promise = page1.waitForEvent('popup');
+  await page1.locator('#cell-actions-17').getByTestId('open-record-detail-button').click();
+  const page2 = await page2Promise;
+  await expect(page2.getByRole('article')).toContainText('UI_Test_Org_India_Grantee_FCRA951288');
+  await page2.locator('.show > div:nth-child(4)').click();
+  await page2.getByText('Grantee', { exact: true }).click();
+  await expect(page2.locator('#organization_recipient_type')).toContainText('Grantee');
+  await expect(page2.locator('#organization_fcra_status')).toContainText('FCRA');
+  await expect(page2.locator('#organization_fcra_registration_number')).toContainText('FCRAN12');
+  await expect(page2.locator('#organization_fcra_certificate_expiry_date')).toContainText('12/4/2026');
+  await page2.locator('h3').filter({ hasText: 'Organisation Information' }).click();
+  await expect(page2.locator('#organization_org_type')).toContainText('Individual');
+});

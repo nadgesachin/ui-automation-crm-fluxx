@@ -1,22 +1,27 @@
 {
-  "name": "playwrighttutorialfullcourse",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {},
-  "keywords": [],
-  "author": "",
+  "name": "crm-fluxx-automation-framework",
+  "version": "2.0.0",
+  "description": "Enterprise UI Automation Framework for CRM-Fluxx Integration Testing",
+  "type": "module",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:crm": "npx playwright test --project=crm-setup --project=crm-tests",
+    "test:fluxx": "npx playwright test --project=fluxx-setup --project=fluxx-tests",
+    "test:integration": "npx playwright test --project=crm-setup --project=fluxx-setup --project=integration",
+    "test:setup-only": "npx playwright test --project=crm-setup --project=fluxx-setup",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "report": "npx playwright show-report",
+    "clean": "rm -rf playwright-report test-results playwright/.auth/*.json"
+  },
+  "keywords": ["playwright", "automation", "testing", "crm", "fluxx"],
+  "author": "QA Automation Team",
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.46.1",
-    "@types/node": "^20.10.4",
-    "allure-commandline": "^2.25.0",
-    "allure-playwright": "^2.10.0"
+    "@types/node": "^20.10.4"
   },
   "dependencies": {
-    "csv-parse": "^5.5.3",
-    "dotenv": "^16.3.1",
-    "otplib": "^12.0.1",
-    "twilio": "^5.3.0"
+    "dotenv": "^16.6.1"
   }
 }

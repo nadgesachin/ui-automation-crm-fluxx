@@ -1,0 +1,17 @@
+{
+  "scenarios": {
+    "basic_contact": {
+      "description": "Basic standalone contact",
+      "firstName": "AUTO_UI_First",
+      "lastName": "Contact",
+      "emailDomain": "test.automation.com"
+    },
+    "org_linked_contact": {
+      "description": "Contact linked to an organisation",
+      "firstName": "AUTO_UI_OrgContact",
+      "lastName": "User",
+      "emailDomain": "test.automation.com",
+      "organisationSearchPrefix": "AUTO_UI_"
+    }
+  }
+}

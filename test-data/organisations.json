@@ -1,0 +1,64 @@
+{
+  "scenarios": {
+    "us_basic": {
+      "description": "Basic US organisation with Fluxx sync",
+      "suffix": "US_Basic",
+      "requiredInFluxx": "Yes",
+      "fluxxType": "Individual",
+      "country": "United States",
+      "city": "New York"
+    },
+    "india_grantee_fcra": {
+      "description": "India organisation with Grantee + FCRA",
+      "suffix": "India_Grantee_FCRA",
+      "requiredInFluxx": "Yes",
+      "fluxxType": "Individual",
+      "country": "India",
+      "city": "Mumbai",
+      "recipientType": "Grantee",
+      "fcraStatus": "FCRA",
+      "fcraExpiryDate": "12-04-2027"
+    },
+    "india_grantee_non_fcra": {
+      "description": "India organisation with Grantee + Non-FCRA",
+      "suffix": "India_Grantee_NonFCRA",
+      "requiredInFluxx": "Yes",
+      "fluxxType": "Individual",
+      "country": "India",
+      "city": "Delhi",
+      "recipientType": "Grantee",
+      "fcraStatus": "Non-FCRA"
+    },
+    "india_service_provider": {
+      "description": "India organisation with Service Provider",
+      "suffix": "India_SP",
+      "requiredInFluxx": "Yes",
+      "fluxxType": "Individual",
+      "country": "India",
+      "city": "Gurgoan",
+      "recipientType": "Service Provider (Entity)"
+    },
+    "india_exempt": {
+      "description": "India organisation with Exempt recipient",
+      "suffix": "India_Exempt",
+      "requiredInFluxx": "Yes",
+      "fluxxType": "Individual",
+      "country": "India",
+      "city": "Bangalore",
+      "recipientType": "Exempt"
+    },
+    "no_fluxx": {
+      "description": "Organisation not required in Fluxx",
+      "suffix": "NoFluxx",
+      "requiredInFluxx": "No"
+    },
+    "org_type_organisation": {
+      "description": "Organisation with Fluxx type = Organisation",
+      "suffix": "OrgType",
+      "requiredInFluxx": "Yes",
+      "fluxxType": "Organisation",
+      "country": "United States",
+      "city": "Chicago"
+    }
+  }
+}

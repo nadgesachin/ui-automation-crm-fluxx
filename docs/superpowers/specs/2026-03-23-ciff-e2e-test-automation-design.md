@@ -80,8 +80,7 @@ pages/
   CRMContactPage.js       ← EXTEND: add update/delete/search methods
   FluxxLoginPage.js       ← existing (keep)
   FluxxOrganisationPage.js← EXTEND: add edit, delete, workflow verification
-  FluxxContactPage.js     ← EXTEND: add search, detail verification
-  FluxxPeoplePage.js      ← NEW: People module via Quick Actions Hub
+  FluxxPeoplePage.js      ← REPLACES FluxxContactPage.js: migrates existing methods + adds Quick Actions Hub search, CRUD, detail verification
   FluxxInvestmentPage.js  ← NEW: Investment CRUD
   FluxxCoFundingPage.js   ← NEW: Co-Funding CRUD
   FluxxQuickActionsPage.js← NEW: Quick Actions Hub, Highlight Feed, model switching
@@ -101,8 +100,7 @@ tests/
     contact.spec.js       ← EXTEND: add update, delete, search, linking tests
   fluxx/
     organisation.spec.js  ← EXTEND: add search, update verification, workflow tests
-    contact.spec.js       ← EXTEND (rename to people.spec.js)
-    people.spec.js        ← NEW: People CRUD via Quick Actions Hub
+    people.spec.js        ← RENAME from contact.spec.js + extend with People CRUD via Quick Actions Hub (delete contacts/ directory)
     investment.spec.js    ← NEW: Investment CRUD
     co-funding.spec.js    ← NEW: Co-Funding CRUD
     read-only.spec.js     ← NEW: Requests, Grants, Reports, Payments, Amendments
@@ -146,12 +144,15 @@ Add 2 new projects to `playwright.config.js`:
 },
 ```
 
-Update existing integration project to depend on all 3 setups:
+Update existing integration project to depend on all test projects (not just setups), ensuring CRUD tests complete before integration runs:
 
 ```javascript
 {
   name: 'integration',
-  dependencies: ['crm-setup', 'fluxx-setup', 'fabric-setup'],
+  dependencies: ['crm-tests', 'fluxx-tests', 'fabric-tests'],
+  // Note: crm-tests already depends on crm-setup, etc., so setup projects run transitively.
+  // Integration tests are also self-contained: they create their own test data within each test.
+  // The dependency ensures CRUD tests don't interfere with sync timing.
 }
 ```
 
@@ -165,6 +166,27 @@ Update existing integration project to depend on all 3 setups:
 | `AUTO_UI_CF_` | Co-Funding | `AUTO_UI_CF_Grant_1711187200` |
 
 All timestamps ensure uniqueness. `TestDataCleaner` tracks IDs in an array, deletes in reverse-creation order during `afterAll`.
+
+### 3.3.1 TestDataCleaner Design
+
+`TestDataCleaner` is a singleton that:
+1. **Tracks records** via `TestDataManager` — both names and Fluxx record IDs (captured after creation)
+2. **Cleanup scope**: CRM records deleted via CRM UI; Fluxx records deleted via Fluxx UI (Edit → Delete)
+3. **Cleanup order**: Co-Funding → Investments → Contacts/People → Organisations (child before parent to avoid referential integrity issues)
+4. **Fallback**: If `afterAll` cleanup fails, global teardown searches for `AUTO_UI_` prefix in both CRM and Fluxx and deletes remaining records
+5. **Methods**: `trackRecord(system, type, id, name)`, `cleanupAll()`, `cleanupByType(type)`, `verifyClean()`
+
+### 3.3.2 Auth State Paths
+
+Add to `config/constants.js` under `AUTH_STATE`:
+
+```javascript
+AUTH_STATE: {
+  CRM: 'playwright/.auth/crm-state.json',
+  FLUXX: 'playwright/.auth/fluxx-state.json',
+  FABRIC: 'playwright/.auth/fabric-state.json',  // NEW
+}
+```
 
 ### 3.4 Authentication Flow
 
@@ -203,7 +225,7 @@ Fabric auth flow:
 | ORG_DD_02 | Data-driven: India org with Consultancy recipient type |
 | ORG_NEG_001 | Required in Fluxx = Yes without mandatory fields — validation |
 | ORG_NEG_002 | Fluxx fields hidden when Required in Fluxx = No |
-| (implicit) | Basic org creation flow documented across multiple tests |
+| ORG_008 | Basic org creation with minimal fields (US, no FCRA) |
 
 #### New — Update
 
@@ -315,26 +337,26 @@ Fabric auth flow:
 
 ### 4.D Fluxx People Tests (11 total: 5 existing + 6 new)
 
-#### Existing (keep as-is)
+#### Existing (rename FLUXX_CONTACT_* → FLUXX_PEOPLE_* for consistency with Fluxx module name)
 
-| ID | Description |
-|----|------------|
-| FLUXX_CONTACT_001 | Contact in org People tab after sync |
-| FLUXX_CONTACT_002 | Contact field mapping (name, email) |
-| FLUXX_CONTACT_003 | Primary Org link on contact detail |
-| FLUXX_CONTACT_004 | Sub-grid contact sync verification |
-| FLUXX_CONTACT_005 | Negative: non-Fluxx org contact absent |
+| ID | Old ID | Description |
+|----|--------|------------|
+| FLUXX_PEOPLE_001 | FLUXX_CONTACT_001 | Contact in org People tab after sync |
+| FLUXX_PEOPLE_002 | FLUXX_CONTACT_002 | Contact field mapping (name, email) |
+| FLUXX_PEOPLE_003 | FLUXX_CONTACT_003 | Primary Org link on contact detail |
+| FLUXX_PEOPLE_004 | FLUXX_CONTACT_004 | Sub-grid contact sync verification |
+| FLUXX_PEOPLE_005 | FLUXX_CONTACT_005 | Negative: non-Fluxx org contact absent |
 
 #### New
 
 | ID | Description | Expected |
 |----|------------|----------|
-| FLUXX_PEOPLE_001 | Search People via Quick Actions Highlight Feed | People table shows matching records with columns: ID, First Name, Last Name, Primary Org, Title, Email, Phone |
-| FLUXX_PEOPLE_002 | Verify People table columns render correctly | All 7 columns visible with correct headers |
-| FLUXX_PEOPLE_003 | Open People record via "Open record" link and verify detail fields | Detail page loads with all contact information |
-| FLUXX_PEOPLE_004 | Verify updated contact fields after CRM edit | Updated name/email reflected in Fluxx People |
-| FLUXX_PEOPLE_005 | Verify contact removal after CRM delete | Person no longer found in Fluxx search |
-| FLUXX_PEOPLE_006 | Pagination — navigate to page 2 of People | Next page loads, different records shown |
+| FLUXX_PEOPLE_006 | Search People via Quick Actions Highlight Feed | People table shows matching records with columns: ID, First Name, Last Name, Primary Org, Title, Email, Phone |
+| FLUXX_PEOPLE_007 | Verify People table columns render correctly | All 7 columns visible with correct headers |
+| FLUXX_PEOPLE_008 | Open People record via "Open record" link and verify detail fields | Detail page loads with all contact information |
+| FLUXX_PEOPLE_009 | Verify updated contact fields after CRM edit | Updated name/email reflected in Fluxx People |
+| FLUXX_PEOPLE_010 | Verify contact removal after CRM delete | Person no longer found in Fluxx search |
+| FLUXX_PEOPLE_011 | Pagination — navigate to page 2 of People | Next page loads, different records shown |
 
 ---
 
@@ -637,6 +659,16 @@ Timeout: 180s per test (3 minutes).
     "name_suffix": "Basic_CF",
     "funder": "Test Funder",
     "amount": "100000"
+  },
+  "large_cofunding": {
+    "name_suffix": "Large_CF",
+    "funder": "Major Foundation",
+    "amount": "5000000"
+  },
+  "minimal_cofunding": {
+    "name_suffix": "Min_CF",
+    "funder": "Small Donor",
+    "amount": "1000"
   }
 }
 ```
@@ -655,12 +687,19 @@ FABRIC_REPORT_URL=https://app.fabric.microsoft.com/groups/df124183-1f44-43bd-bba
 
 ### 8.2 environments.js additions
 
+Add `fabric` config and `getFabricConfig()` export (follows existing `getCRMConfig()`/`getFluxxConfig()` pattern):
+
 ```javascript
 fabric: {
   workspaceUrl: process.env.FABRIC_WORKSPACE_URL,
   reportUrl: process.env.FABRIC_REPORT_URL,
   workspaceName: 'DEV-Portfolio Ratings',
   reportName: 'Portfolio Rating Dashboard - DEV',
+}
+
+export function getFabricConfig() {
+  const env = getEnvironment();
+  return env.fabric;
 }
 ```
 
@@ -688,10 +727,13 @@ fabric: {
 
 | Risk | Mitigation |
 |------|-----------|
-| Fabric Power BI iframes hard to automate | Use accessibility snapshot selectors (ARIA roles, labels), not CSS |
+| Fabric Power BI iframes hard to automate | Use accessibility snapshot selectors (ARIA roles, labels), not CSS. Document discovered selectors in `config/constants.js` under `FABRIC_SELECTORS` during first implementation pass. |
 | Fluxx WebSocket errors during navigation | Add retry/wait logic in page objects, ignore non-blocking WS errors |
 | SSO session expiry mid-test | 180s timeout per test; re-auth in integration tests if needed |
 | CRM → Fluxx sync delay variable (up to 2 min) | Existing retry polling pattern (24 retries × 5s = 2 min max) |
-| Fluxx → Fabric data refresh not real-time | Fabric data updated 26/02/26; tests validate last-refreshed data, not live sync |
+| Fluxx → Fabric data refresh not real-time | FAB_SYNC_* tests validate pre-existing/last-refreshed data counts, NOT freshly created records. E2E_001/E2E_002 are marked `test.slow()` and only verify CRM→Fluxx path; Fabric portion validates that the dashboard loads and shows expected structure (not that the specific new record appeared). |
 | Test data cleanup failure leaves orphans | Global teardown safety net; AUTO_UI_ prefix for manual identification |
 | Investment/Co-Funding form fields unknown until explored at runtime | Page objects use dynamic selectors; first test run documents field structure |
+| **CRM may not support UI record deletion** | Dynamics 365 often uses Deactivate instead of Delete. First implementation pass must verify: (a) if Delete button exists on org/contact records, (b) if deactivation is the alternative. ORG_DEL_*, CONTACT_DEL_*, SYNC_010, SYNC_011 should adapt to whichever mechanism is available. If neither is available via UI, these tests become "document behavior" tests. |
+| E2E pipeline tests may exceed 180s timeout | Integration and E2E tests (E2E_001, E2E_002) use `test.setTimeout(300000)` (5 minutes) to accommodate CRM→Fluxx sync delay + cross-system navigation. |
+| Fluxx → Fabric sync has no defined retry strategy | Unlike CRM→Fluxx (24×5s polling), Fabric data refreshes on a schedule. FAB_SYNC tests do not poll — they read current dashboard state. If data freshness matters, trigger a manual dataset refresh via Fabric API before test run. |

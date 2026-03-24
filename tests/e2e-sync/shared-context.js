@@ -13,7 +13,7 @@ export const sharedContext = {
   org: {
     name: `${AUTO_PREFIX}ORG_E2E_${timestamp}`,
     country: 'India',
-    countryLabel: 'India',
+    countryLabel: 'India, 01/08/2023',
     city: 'Mumbai',
     requiredInFluxx: 'Yes',
     fluxxType: 'Individual',

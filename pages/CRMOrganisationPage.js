@@ -104,9 +104,14 @@ export class CRMOrganisationPage extends BasePage {
     await this.safeFill(this.countrySearchInput, country.toLowerCase());
     await this.page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
 
-    // Click the matching result
+    // Click the matching result — use treeitem role to avoid strict mode conflicts
     if (resultLabel) {
-      await this.page.getByLabel(resultLabel).click();
+      const treeItem = this.page.getByRole('treeitem').filter({ hasText: resultLabel }).first();
+      if (await treeItem.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await treeItem.click();
+      } else {
+        await this.page.getByLabel(resultLabel).first().click();
+      }
     } else {
       // Try multiple strategies to select the country
       const treeItem = this.page.getByRole('treeitem').filter({ hasText: country }).first();

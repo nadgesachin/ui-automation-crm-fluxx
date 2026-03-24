@@ -20,7 +20,8 @@ export class FluxxOrganisationPage extends BasePage {
 
     // Quick Actions Hub selectors (from working test)
     this.quickActionsHub = page.getByLabel('Open Quick Actions Hub');
-    this.quickFilterInput = page.getByTestId('highlight-feed-quick-filter-input');
+    this.quickFilterInput = page.getByPlaceholder('Search records');
+    this.quickFilterInputFallback = page.getByTestId('highlight-feed-quick-filter-input');
     this.openRecordButton = page.getByTestId('open-record-detail-button');
 
     // Grid/table selectors (fallback)
@@ -70,10 +71,17 @@ export class FluxxOrganisationPage extends BasePage {
         await this.page.waitForTimeout(TIMEOUTS.SHORT_WAIT);
       }
 
-      await this.waitForVisible(this.quickFilterInput, TIMEOUTS.ELEMENT_VISIBLE);
-      await this.quickFilterInput.fill('');
-      await this.quickFilterInput.fill(organisationName);
-      await this.quickFilterInput.press('Enter');
+      // Try primary selector (placeholder), then fallback (testid)
+      let searchInput = this.quickFilterInput;
+      if (!await searchInput.isVisible({ timeout: 5000 }).catch(() => false)) {
+        this.log.info('Primary search input not found, trying fallback selector');
+        searchInput = this.quickFilterInputFallback;
+      }
+
+      await this.waitForVisible(searchInput, TIMEOUTS.ELEMENT_VISIBLE);
+      await searchInput.fill('');
+      await searchInput.fill(organisationName);
+      await searchInput.press('Enter');
       // Wait longer for search results to load
       await this.page.waitForTimeout(TIMEOUTS.LONG_WAIT);
     } catch (error) {
@@ -89,9 +97,14 @@ export class FluxxOrganisationPage extends BasePage {
    */
   async organisationExists(organisationName) {
     try {
-      // Strategy 1: Check if the "Open record" button is visible (means search returned results)
+      // Strategy 1: Check if "Open record" link/button is visible (means search returned results)
+      const openRecordLink = this.page.getByRole('link', { name: 'Open record' }).first();
       if (await this.openRecordButton.isVisible({ timeout: TIMEOUTS.ACTION }).catch(() => false)) {
         this.log.info('Search returned results (open-record button visible)');
+        return true;
+      }
+      if (await openRecordLink.isVisible({ timeout: 3000 }).catch(() => false)) {
+        this.log.info('Search returned results (open-record link visible)');
         return true;
       }
       // Strategy 2: Check in the Highlight Feed table rows

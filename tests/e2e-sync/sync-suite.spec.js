@@ -107,7 +107,8 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
 
     fluxxOrg = new FluxxOrganisationPage(page);
 
-    log.step(1, 'Search for org in Fluxx with retry');
+    log.step(1, 'Navigate to Fluxx Quick Actions and search with retry');
+    await fluxxOrg.navigateToOrganisationSearch();
     const found = await fluxxOrg.searchWithRetry(sharedContext.org.name, {
       maxRetries: SYNC_RETRY.MAX_RETRIES,
       retryDelayMs: SYNC_RETRY.DELAY_MS,
@@ -131,9 +132,7 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
     log.section('P1_04: VERIFY CONTACT IN FLUXX');
     test.setTimeout(180000);
 
-    await performFluxxLogin(page);
-
-    fluxxOrg = new FluxxOrganisationPage(page);
+    fluxxOrg = await loginAndNavigateFluxx(page);
     fluxxPeople = new FluxxPeoplePage(page);
 
     log.step(1, 'Search for org in Fluxx');
@@ -175,8 +174,7 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
       test.skip();
     }
 
-    await performFluxxLogin(page);
-    fluxxOrg = new FluxxOrganisationPage(page);
+    fluxxOrg = await loginAndNavigateFluxx(page);
 
     log.step(1, 'Search and open org detail');
     await fluxxOrg.searchWithRetry(sharedContext.org.name);
@@ -245,8 +243,7 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
       test.skip();
     }
 
-    await performFluxxLogin(page);
-    fluxxOrg = new FluxxOrganisationPage(page);
+    fluxxOrg = await loginAndNavigateFluxx(page);
     fluxxPeople = new FluxxPeoplePage(page);
 
     log.step(1, 'Open org and check People tab has contact');
@@ -279,7 +276,7 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
     fluxxQuickActions = new FluxxQuickActionsPage(page);
     fluxxInvestment = new FluxxInvestmentPage(page);
 
-    log.step(1, 'Navigate to Quick Actions Hub');
+    log.step(1, 'Navigate to Fluxx Quick Actions Hub');
     await fluxxQuickActions.navigateToQuickActions();
 
     log.step(2, 'Create investment linked to shared org');
@@ -302,7 +299,7 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
     fluxxQuickActions = new FluxxQuickActionsPage(page);
     fluxxCoFunding = new FluxxCoFundingPage(page);
 
-    log.step(1, 'Navigate to Quick Actions Hub');
+    log.step(1, 'Navigate to Fluxx Quick Actions Hub');
     await fluxxQuickActions.navigateToQuickActions();
 
     log.step(2, 'Create co-funding linked to shared org');
@@ -320,8 +317,7 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
     log.section('P3_03: VERIFY INVESTMENT UNDER ORG');
     test.setTimeout(180000);
 
-    await performFluxxLogin(page);
-    fluxxOrg = new FluxxOrganisationPage(page);
+    fluxxOrg = await loginAndNavigateFluxx(page);
     fluxxInvestment = new FluxxInvestmentPage(page);
 
     log.step(1, 'Open org detail');
@@ -342,8 +338,7 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
     log.section('P3_04: VERIFY CO-FUNDING UNDER ORG');
     test.setTimeout(180000);
 
-    await performFluxxLogin(page);
-    fluxxOrg = new FluxxOrganisationPage(page);
+    fluxxOrg = await loginAndNavigateFluxx(page);
     fluxxCoFunding = new FluxxCoFundingPage(page);
 
     log.step(1, 'Open org detail');
@@ -434,8 +429,7 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
     await page.waitForTimeout(TIMEOUTS.LONG_WAIT);
 
     // Switch to Fluxx to verify absence
-    await performFluxxLogin(page);
-    fluxxOrg = new FluxxOrganisationPage(page);
+    fluxxOrg = await loginAndNavigateFluxx(page);
 
     const found = await fluxxOrg.searchWithRetry(sharedContext.negativeOrg.name, {
       maxRetries: 3,
@@ -487,8 +481,7 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
 
     // --- Delete from Fluxx first (child records) ---
     log.step(1, 'Login to Fluxx for cleanup');
-    await performFluxxLogin(page);
-    fluxxOrg = new FluxxOrganisationPage(page);
+    fluxxOrg = await loginAndNavigateFluxx(page);
 
     // Search and delete AUTO_UI_ orgs from Fluxx
     log.step(2, 'Search for AUTO_UI_ orgs in Fluxx');
@@ -590,6 +583,13 @@ async function performFluxxLogin(page) {
   } catch (err) {
     log.warn(`Fluxx login: ${err.message}`);
   }
+}
+
+async function loginAndNavigateFluxx(page) {
+  await performFluxxLogin(page);
+  const fluxx = new FluxxOrganisationPage(page);
+  await fluxx.navigateToOrganisationSearch();
+  return fluxx;
 }
 
 async function extractFluxxId(page) {

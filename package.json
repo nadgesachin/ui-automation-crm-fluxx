@@ -12,17 +12,25 @@
     "test:headed": "npx playwright test --headed",
     "test:debug": "npx playwright test --debug",
     "report": "npx playwright show-report",
+    "test:e2e": "npx playwright test --project=crm-setup --project=fluxx-setup --project=e2e-sync",
     "test:fabric": "npx playwright test --project=fabric-setup --project=fabric-tests",
     "test:all": "npx playwright test",
     "test:cleanup": "npx playwright test --grep @cleanup",
     "clean": "rm -rf playwright-report test-results playwright/.auth/*.json"
   },
-  "keywords": ["playwright", "automation", "testing", "crm", "fluxx"],
+  "keywords": [
+    "playwright",
+    "automation",
+    "testing",
+    "crm",
+    "fluxx"
+  ],
   "author": "QA Automation Team",
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.46.1",
-    "@types/node": "^20.10.4"
+    "@types/node": "^20.10.4",
+    "pdfkit": "^0.18.0"
   },
   "dependencies": {
     "dotenv": "^16.6.1"

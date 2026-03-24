@@ -38,10 +38,11 @@ export default defineConfig({
   /* Retry failed tests once */
   retries: 1,
 
-  /* Reporter: HTML + console */
+  /* Reporter: HTML + console + PDF */
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['list'],
+    ['./utils/PdfReporter.js'],
   ],
 
   /* Shared settings for all projects */
@@ -119,6 +120,17 @@ export default defineConfig({
         storageState: 'playwright/.auth/fabric-state.json',
       },
       dependencies: ['fabric-setup'],
+    },
+
+    // ===================== OPTIMIZED E2E SYNC SUITE =====================
+    {
+      name: 'e2e-sync',
+      testDir: './tests/e2e-sync',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/crm-state.json',
+      },
+      dependencies: ['crm-setup', 'fluxx-setup'],
     },
 
     // ===================== INTEGRATION TESTS =====================

@@ -178,23 +178,37 @@ export class FluxxOrganisationPage extends BasePage {
     this.log.info('Opening record detail...');
 
     try {
-      // Try multiple selectors for the "Open record" button/link
-      let openBtn = this.openRecordButton;
-      let isVisible = await this.isVisible(openBtn);
+      // Strategy 1: Get the "Open record" link href and navigate directly
+      const openLink = this.page.getByRole('link', { name: 'Open record' }).first();
+      const linkVisible = await openLink.isVisible({ timeout: 5000 }).catch(() => false);
 
-      if (!isVisible) {
-        // Fallback: try the link role selector (Quick Actions Hub uses links)
-        openBtn = this.page.getByRole('link', { name: 'Open record' }).first();
-        isVisible = await openBtn.isVisible({ timeout: 5000 }).catch(() => false);
+      if (linkVisible) {
+        const href = await openLink.getAttribute('href');
+        if (href) {
+          this.log.info(`Navigating directly to record: ${href}`);
+          const fullUrl = href.startsWith('http') ? href : `${this.fluxxBaseURL}${href}`;
+          await this.page.goto(fullUrl, { timeout: TIMEOUTS.NAVIGATION });
+          await this.page.waitForTimeout(TIMEOUTS.LONG_WAIT);
+          // Wait for loading to finish
+          try {
+            await this.page.locator('text=Loading dashboard').waitFor({ state: 'hidden', timeout: 20000 });
+          } catch {
+            this.log.debug('No loading indicator or already loaded');
+          }
+          await this.page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
+          return this.page;
+        }
       }
 
+      // Strategy 2: Try testid button with popup
+      const isVisible = await this.isVisible(this.openRecordButton);
       if (!isVisible) {
         this.log.warn('Open record button/link not visible');
         return null;
       }
 
-      const page1Promise = this.page.waitForEvent('popup');
-      await openBtn.click();
+      const page1Promise = this.page.waitForEvent('popup', { timeout: 10000 });
+      await this.openRecordButton.click();
       const detailPage = await page1Promise;
 
       // Wait for the detail page to fully load (past the "Loading dashboard" splash)

@@ -42,15 +42,19 @@ export class FluxxOrganisationPage extends BasePage {
    * Open Quick Actions Hub
    */
   async openQuickActions() {
-    this.log.info('Opening Quick Actions Hub...');
+    this.log.info('Ensuring Quick Actions Hub is ready...');
     try {
-      const isVisible = await this.isVisible(this.quickActionsHub);
-      if (isVisible) {
-        await this.safeClick(this.quickActionsHub);
-        await this.page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
+      // If we're already on Quick Actions Hub, just wait for it to be ready
+      const url = this.page.url();
+      if (url.includes('/central/quick-actions')) {
+        this.log.debug('Already on Quick Actions Hub');
+        await this.page.waitForTimeout(TIMEOUTS.SHORT_WAIT);
+        return;
       }
+      // Navigate directly instead of clicking link (which opens new tab)
+      await this.navigateToOrganisationSearch();
     } catch (error) {
-      this.log.debug('Quick Actions Hub button not found, may already be open');
+      this.log.debug('Quick Actions Hub navigation issue, continuing...');
     }
   }
 
@@ -127,7 +131,9 @@ export class FluxxOrganisationPage extends BasePage {
    * @param {number} [delayMs] - Delay between retries in ms
    * @returns {Promise<boolean>} True if organisation found
    */
-  async searchWithRetry(organisationName, maxRetries = SYNC_RETRY.MAX_RETRIES, delayMs = SYNC_RETRY.DELAY_MS) {
+  async searchWithRetry(organisationName, options = {}) {
+    const maxRetries = options.maxRetries || SYNC_RETRY.MAX_RETRIES;
+    const delayMs = options.retryDelayMs || options.delayMs || SYNC_RETRY.DELAY_MS;
     this.log.subsection(`Searching with retry (max ${maxRetries} attempts, ${delayMs}ms delay)`);
     this.log.info(`Target: ${organisationName}`);
 
@@ -135,9 +141,8 @@ export class FluxxOrganisationPage extends BasePage {
       try {
         this.log.info(`Attempt ${attempt}/${maxRetries}...`);
 
-        // Reload for fresh data
-        await this.page.reload();
-        await this.page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
+        // Navigate to Quick Actions for fresh search (avoid page.reload which loses context)
+        await this.navigateToOrganisationSearch();
 
         // Search
         await this.searchOrganisation(organisationName);

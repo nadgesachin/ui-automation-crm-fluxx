@@ -17,6 +17,7 @@ import { CRMLoginPage } from '../../pages/CRMLoginPage.js';
 import { CRMOrganisationPage } from '../../pages/CRMOrganisationPage.js';
 import { AUTO_PREFIX } from '../../config/constants.js';
 import { Logger } from '../../utils/Logger.js';
+import { testDataCleaner } from '../../utils/TestDataCleaner.js';
 
 const log = new Logger('CRM-Org-Tests');
 
@@ -639,5 +640,18 @@ test.describe('CRM Organisation Tests', () => {
       log.info(`Form header: ${headerText}`);
     }
     log.success('ORG_NEG_005 PASSED: Past FCRA expiry date validation behavior documented');
+  });
+
+  test.afterAll(async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    try {
+      await testDataCleaner.cleanupAll(page);
+    } catch (err) {
+      console.error('Cleanup failed:', err.message);
+    } finally {
+      await page.close();
+      await context.close();
+    }
   });
 });

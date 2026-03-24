@@ -3,6 +3,7 @@ import { FluxxQuickActionsPage } from '../../pages/FluxxQuickActionsPage.js';
 import { FluxxInvestmentPage } from '../../pages/FluxxInvestmentPage.js';
 import { Logger } from '../../utils/Logger.js';
 import { TestDataManager } from '../../utils/TestDataManager.js';
+import { testDataCleaner } from '../../utils/TestDataCleaner.js';
 
 const log = new Logger('FluxxInvestmentTests');
 const testData = new TestDataManager();
@@ -123,5 +124,18 @@ test.describe('Fluxx Investment Tests', () => {
     log.warn('Invalid org link test TBD — form selectors need exploration');
     expect.soft(true).toBeTruthy();
     log.success('FLUXX_INV_NEG_002 COMPLETED');
+  });
+
+  test.afterAll(async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    try {
+      await testDataCleaner.cleanupAll(page);
+    } catch (err) {
+      console.error('Cleanup failed:', err.message);
+    } finally {
+      await page.close();
+      await context.close();
+    }
   });
 });

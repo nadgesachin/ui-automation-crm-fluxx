@@ -1,6 +1,6 @@
 {
   "name": "crm-fluxx-automation-framework",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Enterprise UI Automation Framework for CRM-Fluxx Integration Testing",
   "type": "module",
   "scripts": {

@@ -21,6 +21,7 @@ import { CRMContactPage } from '../../pages/CRMContactPage.js';
 import { CRMOrganisationPage } from '../../pages/CRMOrganisationPage.js';
 import { AUTO_PREFIX } from '../../config/constants.js';
 import { Logger } from '../../utils/Logger.js';
+import { testDataCleaner } from '../../utils/TestDataCleaner.js';
 
 const log = new Logger('CRM-Contact-Tests');
 
@@ -660,5 +661,18 @@ test.describe('CRM Contact Tests (KT Doc Section 3)', () => {
       log.warn('CRM did not visibly block the 4th org link — verify KT doc rule enforcement in business layer');
     }
     log.success('CONTACT_LINK_002 PASSED: 4th organisation link behavior documented');
+  });
+
+  test.afterAll(async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    try {
+      await testDataCleaner.cleanupAll(page);
+    } catch (err) {
+      console.error('Cleanup failed:', err.message);
+    } finally {
+      await page.close();
+      await context.close();
+    }
   });
 });

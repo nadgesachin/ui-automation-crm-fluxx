@@ -3,6 +3,7 @@ import { FluxxQuickActionsPage } from '../../pages/FluxxQuickActionsPage.js';
 import { FluxxCoFundingPage } from '../../pages/FluxxCoFundingPage.js';
 import { Logger } from '../../utils/Logger.js';
 import { TestDataManager } from '../../utils/TestDataManager.js';
+import { testDataCleaner } from '../../utils/TestDataCleaner.js';
 
 const log = new Logger('FluxxCoFundingTests');
 const testData = new TestDataManager();
@@ -83,5 +84,18 @@ test.describe('Fluxx Co-Funding Tests', () => {
     log.warn('Negative validation TBD — form selectors need exploration');
     expect.soft(true).toBeTruthy();
     log.success('FLUXX_CF_NEG_001 COMPLETED');
+  });
+
+  test.afterAll(async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    try {
+      await testDataCleaner.cleanupAll(page);
+    } catch (err) {
+      console.error('Cleanup failed:', err.message);
+    } finally {
+      await page.close();
+      await context.close();
+    }
   });
 });

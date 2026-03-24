@@ -178,14 +178,23 @@ export class FluxxOrganisationPage extends BasePage {
     this.log.info('Opening record detail...');
 
     try {
-      const isVisible = await this.isVisible(this.openRecordButton);
+      // Try multiple selectors for the "Open record" button/link
+      let openBtn = this.openRecordButton;
+      let isVisible = await this.isVisible(openBtn);
+
       if (!isVisible) {
-        this.log.warn('Open record button not visible');
+        // Fallback: try the link role selector (Quick Actions Hub uses links)
+        openBtn = this.page.getByRole('link', { name: 'Open record' }).first();
+        isVisible = await openBtn.isVisible({ timeout: 5000 }).catch(() => false);
+      }
+
+      if (!isVisible) {
+        this.log.warn('Open record button/link not visible');
         return null;
       }
 
       const page1Promise = this.page.waitForEvent('popup');
-      await this.openRecordButton.click();
+      await openBtn.click();
       const detailPage = await page1Promise;
 
       // Wait for the detail page to fully load (past the "Loading dashboard" splash)

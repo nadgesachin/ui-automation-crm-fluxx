@@ -135,26 +135,35 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
     fluxxOrg = await loginAndNavigateFluxx(page);
     fluxxPeople = new FluxxPeoplePage(page);
 
-    log.step(1, 'Search for org in Fluxx');
+    log.step(1, 'Search for org in Fluxx (org already confirmed in P1_03)');
     const found = await fluxxOrg.searchWithRetry(sharedContext.org.name, {
-      maxRetries: SYNC_RETRY.MAX_RETRIES,
-      retryDelayMs: SYNC_RETRY.DELAY_MS,
+      maxRetries: 5,
+      retryDelayMs: 3000,
     });
 
     if (found) {
-      log.step(2, 'Open org detail and navigate to People tab');
-      const detailPage = await fluxxOrg.openRecordDetail();
-      if (detailPage) {
-        await fluxxPeople.navigateToPeopleTab(detailPage);
+      try {
+        log.step(2, 'Open org detail and navigate to People tab');
+        const detailPage = await fluxxOrg.openRecordDetail();
+        if (detailPage) {
+          log.info(`Detail page opened: ${detailPage.url()}`);
+          await fluxxPeople.navigateToPeopleTab(detailPage);
 
-        log.step(3, 'Verify contact in People tab');
-        const contactFound = await fluxxPeople.contactExistsInPeopleTab(
-          detailPage,
-          sharedContext.contact.firstName,
-        );
-        expect.soft(contactFound, 'Contact should appear in Fluxx People tab').toBeTruthy();
-        sharedContext.contact.synced = contactFound;
-        log.success(`P1_04 ${contactFound ? 'PASSED' : 'SOFT FAIL'} — Contact sync: ${contactFound}`);
+          log.step(3, 'Verify contact in People tab');
+          const contactFound = await fluxxPeople.contactExistsInPeopleTab(
+            detailPage,
+            sharedContext.contact.firstName,
+          );
+          expect.soft(contactFound, 'Contact should appear in Fluxx People tab').toBeTruthy();
+          sharedContext.contact.synced = contactFound;
+          log.success(`P1_04 ${contactFound ? 'PASSED' : 'SOFT FAIL'} — Contact sync: ${contactFound}`);
+        } else {
+          log.warn('P1_04 SOFT FAIL — Could not open org detail page');
+          expect.soft(false, 'Should be able to open org detail').toBeTruthy();
+        }
+      } catch (err) {
+        log.warn(`P1_04 error opening detail: ${err.message}`);
+        expect.soft(false, `Detail page error: ${err.message}`).toBeTruthy();
       }
     } else {
       log.warn('P1_04 SKIPPED — Org not found in Fluxx, cannot verify contact');

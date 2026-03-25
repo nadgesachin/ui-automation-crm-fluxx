@@ -1,6 +1,6 @@
 import express from 'express';
 import { exec } from 'child_process';
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, createReadStream } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -216,15 +216,27 @@ app.post('/api/cleanup', (req, res) => {
   }
 });
 
+// List available reports
+app.get('/api/reports', (req, res) => {
+  const pdfDir = path.join(ROOT, 'test-reports');
+  if (!existsSync(pdfDir)) return res.json({ reports: [] });
+  const files = readdirSync(pdfDir).filter(f => f.endsWith('.pdf')).sort().reverse();
+  res.json({ reports: files });
+});
+
 // Download PDF report
 app.get('/api/report/pdf', (req, res) => {
   const pdfDir = path.join(ROOT, 'test-reports');
-  if (!existsSync(pdfDir)) return res.status(404).json({ error: 'No reports' });
+  if (!existsSync(pdfDir)) return res.status(404).send('No reports directory');
 
   const files = readdirSync(pdfDir).filter(f => f.endsWith('.pdf')).sort().reverse();
-  if (files.length === 0) return res.status(404).json({ error: 'No PDF report found' });
+  if (files.length === 0) return res.status(404).send('No PDF report found. Run tests first.');
 
-  res.download(path.join(pdfDir, files[0]));
+  const filePath = path.join(pdfDir, files[0]);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${files[0]}"`);
+  const stream = createReadStream(filePath);
+  stream.pipe(res);
 });
 
 // Serve test screenshots

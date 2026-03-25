@@ -17,7 +17,7 @@
       <button class="btn btn-primary" id="btn-run-all" onclick="runTests('all')">&#9654; Run All Tests</button>
       <button class="btn btn-danger" id="btn-stop" onclick="stopTests()" style="display:none">&#9632; Stop</button>
       <button class="btn btn-warning" id="btn-cleanup" onclick="showCleanupModal()">&#128465; Clean Data</button>
-      <button class="btn btn-secondary" onclick="downloadPDF()">&#128196; PDF Report</button>
+      <button class="btn btn-secondary" onclick="showReportModal()">&#128196; PDF Report</button>
       <button class="btn btn-success" onclick="refreshResults()">&#8635; Refresh</button>
     </div>
   </div>
@@ -36,6 +36,27 @@
   </div>
 
   <div class="phases" id="phases"></div>
+
+  <!-- Report Modal -->
+  <div id="report-modal" class="modal" style="display:none">
+    <div class="modal-content">
+      <h3>Download Test Report</h3>
+      <p style="margin:12px 0;color:#555;font-size:14px;">Choose which report to view:</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0;">
+        <button class="btn btn-primary" onclick="downloadReport('all')" style="width:100%;justify-content:center;">
+          &#128202; Full Report (All Phases)
+        </button>
+        <button class="btn btn-secondary" onclick="downloadReport('phase1')" style="width:100%;justify-content:center;">Phase 1: CRM to Fluxx Sync</button>
+        <button class="btn btn-secondary" onclick="downloadReport('phase2')" style="width:100%;justify-content:center;">Phase 2: Field Mapping</button>
+        <button class="btn btn-secondary" onclick="downloadReport('phase3')" style="width:100%;justify-content:center;">Phase 3: Investment + Co-Funding</button>
+        <button class="btn btn-secondary" onclick="downloadReport('phase4')" style="width:100%;justify-content:center;">Phase 4: Update + Re-verify</button>
+        <button class="btn btn-secondary" onclick="downloadReport('phase5')" style="width:100%;justify-content:center;">Phase 5: Negative Scenarios</button>
+        <button class="btn btn-secondary" onclick="downloadReport('phase6')" style="width:100%;justify-content:center;">Phase 6: Cleanup</button>
+      </div>
+      <p style="font-size:11px;color:#999;">Reports include pass/fail status, duration, error details, and screenshots for failed tests.</p>
+      <button class="btn btn-secondary btn-sm" onclick="hideReportModal()" style="margin-top:10px;">Cancel</button>
+    </div>
+  </div>
 
   <!-- Cleanup Modal -->
   <div id="cleanup-modal" class="modal" style="display:none">

@@ -90,7 +90,7 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
       firstName: sharedContext.contact.firstName,
       lastName: sharedContext.contact.lastName,
       email: sharedContext.contact.email,
-      primaryOrganisation: sharedContext.org.name,
+      organisationSearch: sharedContext.org.name,
     });
 
     sharedContext.contact.fullName = fullName || `${sharedContext.contact.firstName} ${sharedContext.contact.lastName}`;
@@ -531,65 +531,62 @@ test.describe('CIFF E2E Sync Suite — Optimized (16 tests, 4 records)', () => {
     log.info(`Records to clean: ${summary.total}`);
     summary.records.forEach(r => log.info(`  → ${r}`));
 
-    // --- Delete from Fluxx first (child records) ---
-    log.step(1, 'Login to Fluxx for cleanup');
-    fluxxOrg = await loginAndNavigateFluxx(page);
-
-    // Search and delete AUTO_UI_ orgs from Fluxx
-    log.step(2, 'Search for AUTO_UI_ orgs in Fluxx');
-    const found = await fluxxOrg.searchWithRetry(AUTO_PREFIX, { maxRetries: 3, retryDelayMs: 3000 });
-    if (found) {
-      log.info('Found AUTO_UI_ records in Fluxx — attempting cleanup');
-      try {
-        const detailPage = await fluxxOrg.openRecordDetail();
-        if (detailPage) {
-          await fluxxOrg.deleteOrganisation();
-          log.info('Fluxx org deleted');
-        }
-      } catch (err) {
-        log.warn(`Fluxx cleanup error: ${err.message}`);
-      }
-    }
-
-    // --- Delete from CRM ---
-    log.step(3, 'Navigate to CRM for cleanup');
-    const crmLoginPage = new CRMLoginPage(page);
-    const crmOrgPage = new CRMOrganisationPage(page);
-    const crmContactPage = new CRMContactPage(page);
-
+    // --- Delete from CRM first ---
+    log.step(1, 'Navigate to CRM for cleanup');
     try {
+      const crmLoginPage = new CRMLoginPage(page);
       await crmLoginPage.navigateToAppsAndOpenSalesHub();
 
       // Delete contacts first (child before parent)
-      log.step(4, 'Delete AUTO_UI_ contacts from CRM');
+      log.step(2, 'Delete AUTO_UI_ contacts from CRM');
       await crmLoginPage.navigateToContacts();
-      await crmContactPage.searchContact(AUTO_PREFIX);
       await page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
-      try {
-        await crmContactPage.deleteContact();
-        log.info('CRM contact deleted');
-      } catch (err) {
-        log.warn(`CRM contact cleanup: ${err.message}`);
-      }
+      await deleteCRMRecordsByPrefix(page, AUTO_PREFIX, 'contact');
 
       // Delete organisations
-      log.step(5, 'Delete AUTO_UI_ orgs from CRM');
+      log.step(3, 'Delete AUTO_UI_ orgs from CRM');
       await crmLoginPage.navigateToOrganisation();
-      await crmOrgPage.searchOrganisation(AUTO_PREFIX);
       await page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
-      try {
-        await crmOrgPage.deleteOrganisation();
-        log.info('CRM org deleted');
-      } catch (err) {
-        log.warn(`CRM org cleanup: ${err.message}`);
+      await deleteCRMRecordsByPrefix(page, AUTO_PREFIX, 'organisation');
+    } catch (err) {
+      log.warn(`CRM cleanup error: ${err.message}`);
+    }
+
+    // --- Delete from Fluxx ---
+    log.step(4, 'Login to Fluxx for cleanup');
+    try {
+      fluxxOrg = await loginAndNavigateFluxx(page);
+
+      log.step(5, 'Search and delete AUTO_UI_ orgs from Fluxx');
+      const found = await fluxxOrg.searchWithRetry(AUTO_PREFIX, { maxRetries: 3, retryDelayMs: 3000 });
+      if (found) {
+        const detailPage = await fluxxOrg.openRecordDetail();
+        if (detailPage) {
+          // Click delete in Fluxx org detail
+          const deleteLink = page.locator('a, button').filter({ hasText: 'Delete' }).first();
+          if (await deleteLink.isVisible({ timeout: 5000 }).catch(() => false)) {
+            await deleteLink.click();
+            await page.waitForTimeout(TIMEOUTS.SHORT_WAIT);
+            // Confirm deletion
+            const confirmBtn = page.getByRole('button', { name: /confirm|yes|ok|delete/i }).first();
+            if (await confirmBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+              await confirmBtn.click();
+              await page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
+              log.info('Fluxx org deleted');
+            }
+          } else {
+            log.warn('Delete button not found in Fluxx');
+          }
+        }
+      } else {
+        log.info('No AUTO_UI_ records found in Fluxx');
       }
     } catch (err) {
-      log.error('CRM cleanup failed', err);
+      log.warn(`Fluxx cleanup error: ${err.message}`);
     }
 
     log.section('CLEANUP SUMMARY');
     log.info(`Total records tracked: ${summary.total}`);
-    log.info('Cleanup attempted for all tracked records');
     log.success('P6_01 COMPLETED — Cleanup finished');
   });
 });
@@ -634,6 +631,85 @@ async function performFluxxLogin(page) {
     }
   } catch (err) {
     log.warn(`Fluxx login: ${err.message}`);
+  }
+}
+
+/**
+ * Delete CRM records from list view by searching for prefix, selecting rows, and deleting.
+ * CRM list view delete flow: Search → Select row checkbox → Click Delete in command bar → Confirm
+ */
+async function deleteCRMRecordsByPrefix(page, prefix, recordType) {
+  const log2 = new Logger('CRM-Cleanup');
+  try {
+    // Search for records with prefix
+    const searchBox = page.getByPlaceholder(/filter|search|keyword/i).first();
+    if (await searchBox.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await searchBox.fill(prefix);
+      await searchBox.press('Enter');
+      await page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
+    }
+
+    // Loop: select each AUTO_UI_ row and delete it
+    let deleted = 0;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      // Find a row containing AUTO_UI_
+      const autoRow = page.locator(`div[data-id], tr`).filter({ hasText: prefix }).first();
+      if (!await autoRow.isVisible({ timeout: 5000 }).catch(() => false)) {
+        log2.info(`No more ${recordType} records with prefix "${prefix}" found`);
+        break;
+      }
+
+      // Click the row to select it
+      await autoRow.click();
+      await page.waitForTimeout(TIMEOUTS.SHORT_WAIT);
+
+      // Click Delete from the command bar
+      const deleteBtn = page.getByRole('menuitem', { name: /Delete/i }).first()
+        || page.getByLabel(/Delete/i).first();
+
+      // Try multiple delete button selectors
+      let deleteClicked = false;
+      for (const selector of [
+        page.getByRole('menuitem', { name: /Delete/i }),
+        page.getByRole('button', { name: /Delete/i }),
+        page.getByLabel('Delete'),
+        page.locator('[aria-label="Delete"]'),
+        page.locator('button:has-text("Delete")'),
+      ]) {
+        if (await selector.first().isVisible({ timeout: 3000 }).catch(() => false)) {
+          await selector.first().click();
+          deleteClicked = true;
+          break;
+        }
+      }
+
+      if (!deleteClicked) {
+        log2.warn(`Delete button not found for ${recordType}, trying Deactivate`);
+        const deactivateBtn = page.getByRole('menuitem', { name: /Deactivate/i }).first();
+        if (await deactivateBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+          await deactivateBtn.click();
+          deleteClicked = true;
+        }
+      }
+
+      if (deleteClicked) {
+        await page.waitForTimeout(TIMEOUTS.SHORT_WAIT);
+        // Confirm the deletion dialog
+        const confirmBtn = page.getByRole('button', { name: /Confirm|Delete|OK/i }).first();
+        if (await confirmBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+          await confirmBtn.click();
+          await page.waitForTimeout(TIMEOUTS.MEDIUM_WAIT);
+          deleted++;
+          log2.info(`Deleted ${recordType} #${deleted}`);
+        }
+      } else {
+        log2.warn(`Could not find delete/deactivate for ${recordType}`);
+        break;
+      }
+    }
+    log2.info(`Total ${recordType}s deleted: ${deleted}`);
+  } catch (err) {
+    log2.warn(`CRM cleanup error for ${recordType}: ${err.message}`);
   }
 }
 

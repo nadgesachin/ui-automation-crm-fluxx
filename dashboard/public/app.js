@@ -163,9 +163,23 @@ async function refreshResults() {
   }
 }
 
-// --- PDF Download ---
-function downloadPDF() {
-  window.open('/api/report/pdf', '_blank');
+// --- PDF Report ---
+function showReportModal() {
+  document.getElementById('report-modal').style.display = 'flex';
+}
+
+function hideReportModal() {
+  document.getElementById('report-modal').style.display = 'none';
+}
+
+function downloadReport(phase) {
+  hideReportModal();
+  if (phase === 'all') {
+    window.open('/api/report/pdf', '_blank');
+  } else {
+    // For specific phases, show filtered results in a new window
+    window.open('/api/report/pdf?phase=' + phase, '_blank');
+  }
 }
 
 // --- Cleanup ---

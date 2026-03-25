@@ -167,6 +167,38 @@ app.post('/api/stop', (req, res) => {
   }
 });
 
+// Cleanup test data
+app.post('/api/cleanup', (req, res) => {
+  if (runStatus.running) {
+    return res.status(409).json({ error: 'Tests are running, wait for completion' });
+  }
+
+  const mode = req.body.mode || 'auto'; // 'auto' = run cleanup test, 'manual' = clear reports only
+
+  if (mode === 'manual') {
+    // Clear reports and test artifacts only (no CRM/Fluxx cleanup)
+    try {
+      exec('rm -rf test-results/ test-reports/results.json', { cwd: ROOT }, () => {});
+      res.json({ message: 'Reports and artifacts cleared', mode: 'manual' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  } else {
+    // Run Phase 6 cleanup test (deletes AUTO_UI_ records from CRM + Fluxx)
+    runStatus = { running: true, phase: 'cleanup', startedAt: new Date().toISOString(), log: [] };
+    res.json({ message: 'Cleanup started — deleting AUTO_UI_ records from CRM and Fluxx', mode: 'auto' });
+
+    const cmd = 'npx playwright install firefox chromium && HEADLESS=true npx playwright test --project=crm-setup --project=fluxx-setup --project=e2e-sync --grep "P6_01"';
+    runningProcess = exec(cmd, { cwd: ROOT, maxBuffer: 10 * 1024 * 1024, timeout: 600000 }, (err, stdout, stderr) => {
+      runStatus.running = false;
+      runStatus.completedAt = new Date().toISOString();
+      runStatus.exitCode = err ? err.code : 0;
+      runStatus.log = (stdout + stderr).split('\n').slice(-30);
+      runningProcess = null;
+    });
+  }
+});
+
 // Download PDF report
 app.get('/api/report/pdf', (req, res) => {
   const pdfDir = path.join(ROOT, 'test-reports');

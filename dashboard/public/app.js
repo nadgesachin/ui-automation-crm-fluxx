@@ -168,6 +168,41 @@ function downloadPDF() {
   window.open('/api/report/pdf', '_blank');
 }
 
+// --- Cleanup ---
+function showCleanupModal() {
+  document.getElementById('cleanup-modal').style.display = 'flex';
+}
+
+function hideCleanupModal() {
+  document.getElementById('cleanup-modal').style.display = 'none';
+}
+
+async function runCleanup(mode) {
+  hideCleanupModal();
+  try {
+    const res = await fetch('/api/cleanup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode }),
+    });
+    const data = await res.json();
+    if (res.status === 409) {
+      alert(data.error);
+      return;
+    }
+    if (mode === 'auto') {
+      setRunningState(true, 'cleanup');
+      startPolling();
+      updateStatusBar('running', 'Cleaning AUTO_UI_ test data from CRM + Fluxx...');
+    } else {
+      updateStatusBar('done', 'Reports and artifacts cleared');
+      setTimeout(() => refreshResults(), 1000);
+    }
+  } catch (err) {
+    alert('Cleanup failed: ' + err.message);
+  }
+}
+
 // --- UI Helpers ---
 function setRunningState(running, phase) {
   document.getElementById('btn-run-all').disabled = running;

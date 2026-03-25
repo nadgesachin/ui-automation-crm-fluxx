@@ -84,10 +84,11 @@ app.get('/api/results', (req, res) => {
     const raw = readFileSync(resultsPath, 'utf-8');
     const data = JSON.parse(raw);
 
+    // Recursively extract all specs from nested suites
     const tests = [];
-    for (const suite of data.suites || []) {
-      for (const innerSuite of suite.suites || []) {
-        for (const spec of innerSuite.specs || []) {
+    function extractSpecs(suites) {
+      for (const suite of suites || []) {
+        for (const spec of suite.specs || []) {
           const lastResult = spec.tests?.[0]?.results?.slice(-1)[0];
           tests.push({
             id: spec.title.split(':')[0]?.trim() || spec.title,
@@ -98,8 +99,13 @@ app.get('/api/results', (req, res) => {
             retry: spec.tests?.[0]?.results?.length > 1,
           });
         }
+        // Recurse into nested suites
+        if (suite.suites?.length) {
+          extractSpecs(suite.suites);
+        }
       }
     }
+    extractSpecs(data.suites);
 
     const passed = tests.filter(t => t.status === 'passed').length;
     const failed = tests.filter(t => t.status !== 'passed' && t.status !== 'skipped').length;
@@ -133,7 +139,18 @@ app.post('/api/run', (req, res) => {
   let cmd = 'npx playwright install firefox chromium && HEADLESS=true npm run test:e2e';
 
   if (phase && phase !== 'all') {
-    cmd = `npx playwright install firefox chromium && HEADLESS=true npx playwright test --project=crm-setup --project=fluxx-setup --project=e2e-sync --grep "${phase}"`;
+    // Map phase IDs to grep patterns matching test titles (P1_01, P2_01, etc.)
+    const grepMap = {
+      phase1: 'P1_',
+      phase2: 'P2_',
+      phase3: 'P3_',
+      phase4: 'P4_',
+      phase5: 'P5_',
+      phase6: 'P6_',
+      cleanup: 'P6_01',
+    };
+    const grep = grepMap[phase] || phase;
+    cmd = `npx playwright install firefox chromium && HEADLESS=true npx playwright test --project=crm-setup --project=fluxx-setup --project=e2e-sync --grep "${grep}"`;
   }
 
   runStatus = { running: true, phase: phase || 'all', startedAt: new Date().toISOString(), log: [] };

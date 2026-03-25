@@ -16,7 +16,8 @@
     "test:fabric": "npx playwright test --project=fabric-setup --project=fabric-tests",
     "test:all": "npx playwright test",
     "test:cleanup": "npx playwright test --grep @cleanup",
-    "clean": "rm -rf playwright-report test-results playwright/.auth/*.json"
+    "clean": "rm -rf playwright-report test-results playwright/.auth/*.json",
+    "dashboard": "node dashboard/server.js"
   },
   "keywords": [
     "playwright",
@@ -33,6 +34,7 @@
     "pdfkit": "^0.18.0"
   },
   "dependencies": {
-    "dotenv": "^16.6.1"
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1"
   }
 }

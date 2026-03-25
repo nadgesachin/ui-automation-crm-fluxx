@@ -38,9 +38,10 @@ export default defineConfig({
   /* Retry failed tests once */
   retries: 1,
 
-  /* Reporter: HTML + console + PDF */
+  /* Reporter: HTML + console + PDF + JSON */
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['json', { outputFile: 'test-reports/results.json' }],
     ['list'],
     ['./utils/PdfReporter.js'],
   ],

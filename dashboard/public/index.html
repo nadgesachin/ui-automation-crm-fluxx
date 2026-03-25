@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIFF Test Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>CIFF E2E Sync Test Dashboard</h1>
+      <div class="subtitle">CRM &rarr; Fluxx &rarr; Investment &amp; Co-Funding | 16 Tests | 4 Records | 100% Cleanup</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" id="btn-run-all" onclick="runTests('all')">&#9654; Run All Tests</button>
+      <button class="btn btn-danger" id="btn-stop" onclick="stopTests()" style="display:none">&#9632; Stop</button>
+      <button class="btn btn-secondary" onclick="downloadPDF()">&#128196; PDF Report</button>
+      <button class="btn btn-success" onclick="refreshResults()">&#8635; Refresh</button>
+    </div>
+  </div>
+
+  <div class="summary" id="summary">
+    <div class="card total"><div class="label">Total Tests</div><div class="value" id="s-total">-</div></div>
+    <div class="card passed"><div class="label">Passed</div><div class="value" id="s-passed">-</div></div>
+    <div class="card failed"><div class="label">Failed</div><div class="value" id="s-failed">-</div></div>
+    <div class="card skipped"><div class="label">Skipped</div><div class="value" id="s-skipped">-</div></div>
+    <div class="card rate"><div class="label">Pass Rate</div><div class="value" id="s-rate">-</div></div>
+  </div>
+
+  <div id="status-bar" class="status-bar idle">
+    <span id="status-icon">&#9679;</span>
+    <span id="status-text">Ready to run tests</span>
+  </div>
+
+  <div class="phases" id="phases"></div>
+
+  <div class="footer">
+    CIFF Automation Framework v3.0.0 | Powered by Playwright | Dashboard &copy; 2026
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
